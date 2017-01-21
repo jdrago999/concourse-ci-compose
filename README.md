@@ -31,6 +31,10 @@ Update your `/etc/hosts` file.
 echo "127.0.0.1    concourse.local" | sudo tee -a /etc/hosts
 ```
 
+### Step 4
+
+Follow the instructions at [Concourse CI](http://concourse.ci) (except for the part about starting it in a Vagrant VM).
+
 ## Acknowledgement
 
 I found the following gist helpful: https://gist.github.com/colthreepv/6b818cfcf296dc1b5c2cf15eb76a140e
