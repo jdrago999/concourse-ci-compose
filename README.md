@@ -1,6 +1,8 @@
 
 # Concourse CI with Docker Compose
 
+Run the excellent [Concourse CI](http://concourse.ci) in Docker Compose.
+
 ## Setup
 
 ### Step 1
