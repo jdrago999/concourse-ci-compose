@@ -1,0 +1,60 @@
+version: '2'
+services:
+  concourse-db:
+    image: postgres:9.5
+    volumes: ['database:/database']
+    env_file: .env
+    environment:
+      POSTGRES_DB: concourse
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /database
+    restart: on-failure:10
+
+  concourse-web:
+    image: concourse/concourse
+    command: web
+    ports: ['8080:8080']
+    volumes: ['web-keys:/concourse-keys']
+    depends_on: [keys, concourse-db]
+    extra_hosts: ['dockerhost:$DOCKERHOST']
+    env_file: .env
+    environment:
+      CONCOURSE_BASIC_AUTH_USERNAME: ${BASIC_AUTH_USER}
+      CONCOURSE_BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD}
+      CONCOURSE_EXTERNAL_URL: http://dockerhost:8080
+      CONCOURSE_POSTGRES_DATA_SOURCE: |-
+        postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@concourse-db:5432/concourse?sslmode=disable
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: on-failure:10
+
+  concourse-worker:
+    image: concourse/concourse
+    privileged: true
+    command: worker
+    depends_on: [keys]
+    volumes: ['worker-keys:/concourse-keys']
+    environment:
+      CONCOURSE_TSA_HOST: concourse-web
+      CONCOURSE_GARDEN_ADDRESS: concourse-worker
+      CONCOURSE_BAGGAGECLAIM_ADDRESS: concourse-worker
+      CONCOURSE_GARDEN_FORWARD_ADDRESS: concourse-worker
+      CONCOURSE_BAGGAGECLAIM_FORWARD_ADDRESS: concourse-worker
+      CONCOURSE_GARDEN_DNS_SERVER: 8.8.8.8
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: on-failure:10
+
+  keys:
+    build: .
+    volumes:
+      - web-keys:/keys/web
+      - worker-keys:/keys/worker
+
+volumes:
+  database:    { external: { name: concourse-db } }
+  web-keys:    { external: { name: concourse-web-keys } }
+  worker-keys: { external: { name: concourse-worker-keys } }
